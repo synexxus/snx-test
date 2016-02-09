@@ -34,7 +34,7 @@
 			};
 
 			spi0: spi@f0004000 {
-				cs-gpios = <0>, <&pioA 21 0>;
+				cs-gpios = <&pioD 13 0>, <&pioA 23 0>;
 				status = "okay";
 
 				gpio_expander0: microchip@0 {
@@ -43,6 +43,12 @@
 					gpio-controller;
 					spi-max-frequency = <600000>;
 					reg = <0>;
+					microchip,spi-present-mask=<2>;
+					microchip,irq-mirror;
+					interrupt-controller;
+					interrupt-parent = <&pioC>;
+					interrupts = <15 IRQ_TYPE_LEVEL_LOW>;
+					#interrupt-cells=<2>;
 				};
 
 				gpio_expander1: microchip@1 {
@@ -51,6 +57,12 @@
 					gpio-controller;
 					spi-max-frequency = <600000>;
 					reg = <1>;
+					microchip,spi-present-mask=<1>;
+					microchip,irq-mirror;
+					interrupt-controller;
+					interrupt-parent = <&pioA>;
+					interrupts = <17 IRQ_TYPE_LEVEL_LOW>;
+					#interrupt-cells=<2>;
 				};
 			};
 
@@ -174,7 +186,13 @@
 
 			macb1: ethernet@f802c000 {
 				phy-mode = "rmii";
+				#address-cells = <1>;
+				#size-cells = <0>;
 				status = "okay";
+
+				ethernet-phy@1 {
+					reg = <0x1>;
+				};
 			};
 
 			dbgu: serial@ffffee00 {
