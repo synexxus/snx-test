@@ -349,6 +349,10 @@
 					trigger-name = "continuous";
 					trigger-value = <0x6>;
 				};
+				trigger@4 {
+					trigger-name = "periodic";
+					trigger-value = <0x5>;
+				};
 			};
 
 			i2c2: i2c@f801c000 {
