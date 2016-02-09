@@ -92,6 +92,26 @@ static struct nand_ecclayout nand_oob_128 = {
 		 .length = 78} }
 };
 
+static struct nand_ecclayout nand_oob_224 = {
+	.eccbytes = 96,
+	.eccpos = {
+		   130, 131, 132, 133, 134, 135, 136, 137,
+		   138, 139, 140, 141, 142, 143, 144, 145,
+		   146, 147, 148, 149, 150, 151, 152, 153,
+		   154, 155, 156, 157, 158, 159, 160, 161,
+		   162, 163, 164, 165, 166, 167, 168, 169,
+		   170, 171, 172, 173, 174, 175, 176, 177,
+		   178, 179, 180, 181, 182, 183, 184, 185,
+		   185, 186, 187, 188, 189, 190, 191, 192,
+		   193, 194, 195, 196, 197, 198, 199, 200,
+		   201, 202, 202, 203, 204, 205, 206, 207,
+		   208, 209, 210, 211, 212, 213, 214, 215,
+		   216, 217, 218, 219, 220, 221, 222, 223},
+	.oobfree = {
+		{.offset = 2,
+		 .length = 128} }
+};
+
 static int nand_get_device(struct mtd_info *mtd, int new_state);
 
 static int nand_do_write_oob(struct mtd_info *mtd, loff_t to,
@@ -3717,6 +3737,9 @@ int nand_scan_tail(struct mtd_info *mtd)
 			break;
 		case 128:
 			ecc->layout = &nand_oob_128;
+			break;
+		case 224:
+			ecc->layout = &nand_oob_224;
 			break;
 		default:
 			pr_warn("No oob scheme defined for oobsize %d\n",

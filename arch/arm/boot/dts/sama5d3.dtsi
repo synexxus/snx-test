@@ -239,7 +239,9 @@
 			};
 
 			adc0: adc@f8018000 {
-				compatible = "atmel,at91sam9260-adc";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				compatible = "atmel,at91sam9x5-adc";
 				reg = <0xf8018000 0x100>;
 				interrupts = <29 IRQ_TYPE_LEVEL_HIGH 5>;
 				pinctrl-names = "default";
@@ -261,14 +263,9 @@
 				clocks = <&adc_clk>,
 					 <&adc_op_clk>;
 				clock-names = "adc_clk", "adc_op_clk";
-				atmel,adc-channel-base = <0x50>;
 				atmel,adc-channels-used = <0xfff>;
-				atmel,adc-drdy-mask = <0x1000000>;
-				atmel,adc-num-channels = <12>;
 				atmel,adc-startup-time = <40>;
-				atmel,adc-status-register = <0x30>;
-				atmel,adc-trigger-register = <0xc0>;
-				atmel,adc-use-external;
+				atmel,adc-use-external-triggers;
 				atmel,adc-vref = <3000>;
 				atmel,adc-res = <10 12>;
 				atmel,adc-res-names = "lowres", "highres";
@@ -292,6 +289,10 @@
 				trigger@3 {
 					trigger-name = "continuous";
 					trigger-value = <0x6>;
+				};
+				trigger@4 {
+					trigger-name = "periodic";
+					trigger-value = <0x5>;
 				};
 			};
 

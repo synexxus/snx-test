@@ -89,6 +89,7 @@ struct at91_adc_state {
 	struct at91_adc_trigger	*trigger_list;
 	u32			trigger_number;
 	bool			use_external;
+	u32			trgper; /* Trigger Period = (TRGPER+1) / ADCCLK */
 	u32			vref_mv;
 	u32			res;		/* resolution used for convertions */
 	bool			low_res;	/* the resolution corresponds to the lowest one */
@@ -140,6 +141,19 @@ static irqreturn_t at91_adc_trigger_handler(int irq, void *p)
 	enable_irq(st->irq);
 
 	return IRQ_HANDLED;
+}
+
+static int at91_adc_set_trgper(struct iio_dev *idev)
+{
+	struct at91_adc_state *st = iio_priv(idev);
+	u32 status = at91_adc_readl(st, st->registers->trigger_register);
+
+	status &= ~AT91_ADC_TRGR_TRGPER;
+
+	at91_adc_writel(st, st->registers->trigger_register,
+			status | AT91_ADC_TRGR_TRGPER_(st->trgper));
+
+	return 0;
 }
 
 /* Handler for classic adc channel eoc trigger */
@@ -697,6 +711,10 @@ static int at91_adc_probe_dt(struct at91_adc_state *st,
 	}
 	st->startup_time = prop;
 
+	prop = 0xFFFF; /* Slowest frequency as default */
+	of_property_read_u32(node, "atmel,adc-trgper", &prop);
+	st->trgper = prop;
+
 	prop = 0;
 	of_property_read_u32(node, "atmel,adc-sample-hold-time", &prop);
 	st->sample_hold_time = prop;
@@ -1018,6 +1036,8 @@ static int at91_adc_probe(struct platform_device *pdev)
 		reg |= AT91_ADC_SLEEP;
 	reg |= AT91_ADC_SHTIM_(shtim) & AT91_ADC_SHTIM;
 	at91_adc_writel(st, AT91_ADC_MR, reg);
+
+	at91_adc_set_trgper(idev);
 
 	/* Setup the ADC channels available on the board */
 	ret = at91_adc_channel_init(idev);
