@@ -133,7 +133,7 @@
 
 			spi1: spi@f8008000 {
 				/* Default chip select lines */
-				cs-gpios = <0>, <0>, <0>, <0>;
+				cs-gpios = <&pioC 25 0>, <&pioC 26 0>, <&pioC 27 0>, <&pioC 28 0>;
 				status = "okay";
 				analog-digital@0{
 					compatible = "spidev";
@@ -176,7 +176,7 @@
 				status = "okay";
 				//atmel,adc-channels-used = <0x0ff>;
 				/* this trgper value should give us ~2000 interrupts per second */
-				atmel,adc-trgper = <15000>;
+				atmel,adc-trgper = <1500>;
 			};
 
 			i2c2: i2c@f801c000 {
