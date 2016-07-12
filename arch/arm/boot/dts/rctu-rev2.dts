@@ -303,12 +303,12 @@
 		red {
 			label = "red";
 			gpios = <&pioC 29 GPIO_ACTIVE_LOW>;
+			linux,default-trigger = "heartbeat";
 		};
 
 		green {
 			label = "green";
 			gpios = <&pioB 15 GPIO_ACTIVE_LOW>;
-			linux,default-trigger = "heartbeat";
 		};
 	};
 };
