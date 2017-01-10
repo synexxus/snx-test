@@ -242,9 +242,9 @@
 
 		nand0: nand@60000000 {
 			nand-bus-width = <8>;
-			//nand-ecc-mode = "hw";
+			nand-ecc-mode = "hw";
 			atmel,has-pmecc;
-			atmel,pmecc-cap = <8>;
+			atmel,pmecc-cap = <4>;
 			atmel,pmecc-sector-size = <512>;
 			nand-on-flash-bbt;
 			status = "okay";
