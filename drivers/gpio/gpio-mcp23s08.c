@@ -341,7 +341,7 @@ mcp23s08_direction_output(struct gpio_chip *chip, unsigned offset, int value)
 static irqreturn_t mcp23s08_irq(int irq, void *data)
 {
 	struct mcp23s08 *mcp = data;
-	int intcap, intf, i, gpio_state;
+	int intcap, intf, i;
 	unsigned int child_irq;
 
 	mutex_lock(&mcp->lock);
@@ -362,25 +362,15 @@ static irqreturn_t mcp23s08_irq(int irq, void *data)
 	mcp->cache[MCP_INTCAP] = intcap;
 	mutex_unlock(&mcp->lock);
 
-	/* This will clear the interrupt */
-	gpio_state = mcp->ops->read(mcp, MCP_GPIO);
-	if (gpio_state < 0) {
-		mutex_unlock(&mcp->lock);
-		return IRQ_HANDLED;
-	}
 
 	for (i = 0; i < mcp->chip.ngpio; i++) {
-		int bit_changed = (BIT(i) & gpio_state) != (BIT(i) & mcp->cache[MCP_GPIO]);
-		if ((bit_changed && (BIT(i) & mcp->irq_rise)) || 
-			(bit_changed && (~BIT(i) & mcp->irq_fall)) ){
+		if ((BIT(i) & mcp->cache[MCP_INTF]) &&
+		    ((BIT(i) & intcap & mcp->irq_rise) ||
+		     (mcp->irq_fall & ~intcap & BIT(i)))) {
 			child_irq = irq_find_mapping(mcp->irq_domain, i);
 			handle_nested_irq(child_irq);
 		}
 	}
-
-	mutex_lock(&mcp->lock);
-	mcp->cache[MCP_GPIO] = gpio_state;
-	mutex_unlock(&mcp->lock);
 
 	return IRQ_HANDLED;
 }
