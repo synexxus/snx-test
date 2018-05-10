@@ -238,6 +238,10 @@
 					clock-frequency = <12000000>;
 				};
 			};
+
+			watchdog@fffffe40 {
+				status = "okay";
+			};
 		};
 
 		nand0: nand@60000000 {
