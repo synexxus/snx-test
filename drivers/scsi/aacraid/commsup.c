@@ -611,10 +611,10 @@ int aac_fib_send(u16 command, struct fib *fibptr, unsigned long size,
 					}
 					return -EFAULT;
 				}
-				/* We used to udelay() here but that absorbed
-				 * a CPU when a timeout occured. Not very
-				 * useful. */
-				cpu_relax();
+				/*
+				 * Allow other processes / CPUS to use core
+				 */
+				schedule();
 			}
 		} else if (down_interruptible(&fibptr->event_wait)) {
 			/* Do nothing ... satisfy
@@ -1363,13 +1363,13 @@ static int _aac_reset_adapter(struct aac_dev *aac, int forced)
 	 * will ensure that i/o is queisced and the card is flushed in that
 	 * case.
 	 */
+	aac_free_irq(aac);
 	aac_fib_map_free(aac);
 	pci_free_consistent(aac->pdev, aac->comm_size, aac->comm_addr, aac->comm_phys);
 	aac->comm_addr = NULL;
 	aac->comm_phys = 0;
 	kfree(aac->queues);
 	aac->queues = NULL;
-	aac_free_irq(aac);
 	kfree(aac->fsa_dev);
 	aac->fsa_dev = NULL;
 	quirks = aac_get_driver_ident(index)->quirks;
@@ -1970,6 +1970,10 @@ int aac_command_thread(void *data)
 		if (difference <= 0)
 			difference = 1;
 		set_current_state(TASK_INTERRUPTIBLE);
+
+		if (kthread_should_stop())
+			break;
+
 		schedule_timeout(difference);
 
 		if (kthread_should_stop())

@@ -285,7 +285,7 @@ static int l2tp_nl_cmd_tunnel_delete(struct sk_buff *skb, struct genl_info *info
 	l2tp_tunnel_notify(&l2tp_nl_family, info,
 			   tunnel, L2TP_CMD_TUNNEL_DELETE);
 
-	(void) l2tp_tunnel_delete(tunnel);
+	l2tp_tunnel_delete(tunnel);
 
 out:
 	return ret;
@@ -732,6 +732,8 @@ static int l2tp_nl_session_send(struct sk_buff *skb, u32 portid, u32 seq, int fl
 
 	if ((session->ifname[0] &&
 	     nla_put_string(skb, L2TP_ATTR_IFNAME, session->ifname)) ||
+	    (session->offset &&
+	     nla_put_u16(skb, L2TP_ATTR_OFFSET, session->offset)) ||
 	    (session->cookie_len &&
 	     nla_put(skb, L2TP_ATTR_COOKIE, session->cookie_len,
 		     &session->cookie[0])) ||
@@ -827,7 +829,7 @@ static int l2tp_nl_cmd_session_dump(struct sk_buff *skb, struct netlink_callback
 				goto out;
 		}
 
-		session = l2tp_session_find_nth(tunnel, si);
+		session = l2tp_session_get_nth(tunnel, si, false);
 		if (session == NULL) {
 			ti++;
 			tunnel = NULL;
@@ -837,8 +839,11 @@ static int l2tp_nl_cmd_session_dump(struct sk_buff *skb, struct netlink_callback
 
 		if (l2tp_nl_session_send(skb, NETLINK_CB(cb->skb).portid,
 					 cb->nlh->nlmsg_seq, NLM_F_MULTI,
-					 session, L2TP_CMD_SESSION_GET) < 0)
+					 session, L2TP_CMD_SESSION_GET) < 0) {
+			l2tp_session_dec_refcount(session);
 			break;
+		}
+		l2tp_session_dec_refcount(session);
 
 		si++;
 	}
