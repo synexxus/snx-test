@@ -54,6 +54,34 @@
 	status = "okay";
 };
 
+/* From imx6q-gw54xx.dts */
+&ipu2_csi1 {
+	pinctrl-names = "default";
+	pinctrl-0 = <&pinctrl_ipu2_csi1>;
+};
+
+&iomuxc {
+/*
+	pinctrl_ipu2_csi1: ipu2_csi1grp {
+		fsl,pins = <
+			MX6QDL_PAD_EIM_DA5__IPU2_CSI1_DATA04    0x1b0b0
+			MX6QDL_PAD_EIM_DA4__IPU2_CSI1_DATA05    0x1b0b0
+			MX6QDL_PAD_EIM_DA3__IPU2_CSI1_DATA06    0x1b0b0
+			MX6QDL_PAD_EIM_DA2__IPU2_CSI1_DATA07    0x1b0b0
+			MX6QDL_PAD_EIM_DA1__IPU2_CSI1_DATA08    0x1b0b0
+			MX6QDL_PAD_EIM_DA0__IPU2_CSI1_DATA09    0x1b0b0
+			MX6QDL_PAD_EIM_EB1__IPU2_CSI1_DATA10    0x1b0b0
+			MX6QDL_PAD_EIM_EB0__IPU2_CSI1_DATA11    0x1b0b0
+			MX6QDL_PAD_EIM_DA12__IPU2_CSI1_VSYNC     0x1b0b0
+			MX6QDL_PAD_EIM_DA11__IPU2_CSI1_HSYNC     0x1b0b0
+			MX6QDL_PAD_EIM_A16__IPU2_CSI1_PIXCLK    0x1b0b0
+		>;
+	};
+*/
+
+
+};
+
 /*
 &ipu1_csi1_from_mipi_vc1 {
 	clock-lanes = <0>;

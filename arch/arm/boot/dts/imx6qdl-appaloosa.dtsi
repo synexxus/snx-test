@@ -206,6 +206,19 @@
 	};
 
 /*
+	hdmi-in {
+		compatible = "hdmi-connector";
+		type = "a";
+
+		port {
+			hdmi_con_in: endpoint {
+				remote-endpoint = <&adv7604_in>;
+			};
+		};
+	};
+*/
+
+/*
 	backlight_lcd: backlight-lcd {
 		compatible = "pwm-backlight";
 		pwms = <&pwm1 0 5000000>;
@@ -274,14 +287,12 @@
 */
 };
 
-/*
-&ipu1_csi0_from_ipu1_csi0_mux {
+&ipu2_csi1_from_ipu2_csi1_mux {
 	bus-width = <8>;
 	data-shift = <12>; 
 	hsync-active = <1>;
 	vync-active = <1>;
 };
-*/
 
 /*
 &ipu1_csi0_mux_from_parallel_sensor {
@@ -387,8 +398,8 @@
                 port@1 {
                         reg = <1>;
 /*
-                        hdmi_in: endpoint {
-                                remote-endpoint = <&ccdc_in>;
+                        adv7604_in: endpoint {
+                                remote-endpoint = <&hdmi_con_in>;
                         };
 */
                 };
@@ -664,6 +675,56 @@
 				MX6QDL_PAD_NANDF_D6__GPIO2_IO06 0x1b0b0	/* CD */
 			>;
 		};
+
+                /* From syn-3.10.31-1.2.0 */
+		/* 
+                pinctrl_ipu2_csi1: ipu2_csi1grp {
+                        fsl,pins = <
+                                MX6QDL_PAD_EIM_A17__IPU2_CSI1_DATA12            0x80000000
+                                MX6QDL_PAD_EIM_A18__IPU2_CSI1_DATA13            0x80000000
+                                MX6QDL_PAD_EIM_A19__IPU2_CSI1_DATA14            0x80000000
+                                MX6QDL_PAD_EIM_A20__IPU2_CSI1_DATA15            0x80000000
+                                MX6QDL_PAD_EIM_A21__IPU2_CSI1_DATA16            0x80000000
+                                MX6QDL_PAD_EIM_A22__IPU2_CSI1_DATA17            0x80000000
+                                MX6QDL_PAD_EIM_A23__IPU2_CSI1_DATA18            0x80000000
+                                MX6QDL_PAD_EIM_A24__IPU2_CSI1_DATA19            0x80000000
+                                MX6QDL_PAD_EIM_A16__IPU2_CSI1_PIXCLK            0x80000000
+                                MX6QDL_PAD_EIM_DA11__IPU2_CSI1_HSYNC            0x80000000
+                                MX6QDL_PAD_EIM_DA12__IPU2_CSI1_VSYNC            0x80000000
+                                MX6QDL_PAD_EIM_DA10__IPU2_CSI1_DATA_EN          0x80000000
+                        >;
+                };
+		*/
+
+		/* from syn-3.10.53-1.1.2 */
+                pinctrl_ipu2_csi1: ipu2_csi1grp {
+                        fsl,pins = <
+                                MX6QDL_PAD_EIM_DA9__IPU2_CSI1_DATA00            0x1b0b0
+                                MX6QDL_PAD_EIM_DA8__IPU2_CSI1_DATA01            0x1b0b0
+                                MX6QDL_PAD_EIM_DA7__IPU2_CSI1_DATA02            0x1b0b0
+                                MX6QDL_PAD_EIM_DA6__IPU2_CSI1_DATA03            0x1b0b0
+                                MX6QDL_PAD_EIM_DA5__IPU2_CSI1_DATA04            0x1b0b0
+                                MX6QDL_PAD_EIM_DA4__IPU2_CSI1_DATA05            0x1b0b0
+                                MX6QDL_PAD_EIM_DA3__IPU2_CSI1_DATA06            0x1b0b0
+                                MX6QDL_PAD_EIM_DA2__IPU2_CSI1_DATA07            0x1b0b0
+                                MX6QDL_PAD_EIM_DA1__IPU2_CSI1_DATA08            0x1b0b0
+                                MX6QDL_PAD_EIM_DA0__IPU2_CSI1_DATA09            0x1b0b0
+                                MX6QDL_PAD_EIM_EB1__IPU2_CSI1_DATA10            0x1b0b0
+                                MX6QDL_PAD_EIM_EB0__IPU2_CSI1_DATA11            0x1b0b0
+                                MX6QDL_PAD_EIM_A17__IPU2_CSI1_DATA12            0x1b0b0
+                                MX6QDL_PAD_EIM_A18__IPU2_CSI1_DATA13            0x1b0b0
+                                MX6QDL_PAD_EIM_A19__IPU2_CSI1_DATA14            0x1b0b0
+                                MX6QDL_PAD_EIM_A20__IPU2_CSI1_DATA15            0x1b0b0
+                                MX6QDL_PAD_EIM_A21__IPU2_CSI1_DATA16            0x1b0b0
+                                MX6QDL_PAD_EIM_A22__IPU2_CSI1_DATA17            0x1b0b0
+                                MX6QDL_PAD_EIM_A23__IPU2_CSI1_DATA18            0x1b0b0
+                                MX6QDL_PAD_EIM_A24__IPU2_CSI1_DATA19            0x1b0b0
+                                MX6QDL_PAD_EIM_A16__IPU2_CSI1_PIXCLK            0x1b0b0
+                                MX6QDL_PAD_EIM_DA11__IPU2_CSI1_HSYNC            0x1b0b0
+                                MX6QDL_PAD_EIM_DA12__IPU2_CSI1_VSYNC            0x1b0b0
+                                MX6QDL_PAD_EIM_DA10__GPIO3_IO10             0xb0b1
+                        >;
+                };
 	};
 };
 

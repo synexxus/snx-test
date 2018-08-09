@@ -1667,6 +1667,7 @@ static int adv76xx_s_dv_timings(struct v4l2_subdev *sd,
 	if (!timings)
 		return -EINVAL;
 
+printk( "set dv timings width %d height %d\n", timings->bt.width, timings->bt.height);
 	if (v4l2_match_dv_timings(&state->timings, timings, 0, false)) {
 		v4l2_dbg(1, debug, sd, "%s: no change\n", __func__);
 		return 0;
@@ -2530,6 +2531,8 @@ static int adv76xx_log_status(struct v4l2_subdev *sd)
 	v4l2_info(sd, "Prim-mode = 0x%x, video std = 0x%x, v_freq = 0x%x\n",
 			io_read(sd, 0x01) & 0x0f, io_read(sd, 0x00) & 0x3f,
 			(io_read(sd, 0x01) & 0x70) >> 4);
+	v4l2_info(sd, "Selected input: %d\n", state->selected_input);
+	v4l2_info(sd, "Input mux: %d\n", afe_read(sd,0x02) & 0x7);
 
 	v4l2_info(sd, "-----Video Timings-----\n");
 	if (read_stdi(sd, &stdi))
@@ -3085,6 +3088,7 @@ static const struct i2c_device_id adv76xx_i2c_id[] = {
 MODULE_DEVICE_TABLE(i2c, adv76xx_i2c_id);
 
 static const struct of_device_id adv76xx_of_id[] __maybe_unused = {
+	{ .compatible = "adi,adv7604", .data = &adv76xx_chip_info[ADV7604] },
 	{ .compatible = "adi,adv7611", .data = &adv76xx_chip_info[ADV7611] },
 	{ .compatible = "adi,adv7612", .data = &adv76xx_chip_info[ADV7612] },
 	{ }
@@ -3324,6 +3328,7 @@ static int adv76xx_probe(struct i2c_client *client,
 	v4l_dbg(1, debug, client, "detecting adv76xx client on address 0x%x\n",
 			client->addr << 1);
 
+
 	state = devm_kzalloc(&client->dev, sizeof(*state), GFP_KERNEL);
 	if (!state)
 		return -ENOMEM;
@@ -3399,12 +3404,14 @@ static int adv76xx_probe(struct i2c_client *client,
 	 */
 	switch (state->info->type) {
 	case ADV7604:
+printk("state->regmap[ADV76XX_PAGE_IO] %p\n", state->regmap[ADV76XX_PAGE_IO]);
 		err = regmap_read(state->regmap[ADV76XX_PAGE_IO], 0xfb, &val);
 		if (err) {
 			v4l2_err(sd, "Error %d reading IO Regmap\n", err);
 			return -ENODEV;
 		}
 		if (val != 0x68) {
+printk("got address 0x%x expected 0x68\n", val);
 			v4l2_err(sd, "not an adv7604 on address 0x%x\n",
 					client->addr << 1);
 			return -ENODEV;
@@ -3532,6 +3539,11 @@ static int adv76xx_probe(struct i2c_client *client,
 	err = v4l2_async_register_subdev(sd);
 	if (err)
 		goto err_entity;
+
+/* set to analog */
+adv76xx_s_routing(sd, 4, 0, 0 );
+/* select the proper analog input */
+afe_write(sd, 0x02, 0x02);
 
 	return 0;
 
