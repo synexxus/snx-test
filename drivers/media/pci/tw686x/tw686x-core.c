@@ -246,12 +246,20 @@ static void* tw686x_register_gpio(struct pci_dev *pcidev)
 {
 	struct platform_device *pdev;
 
+	printk( "register gpio tw686x\n" );
 	pdev = platform_device_alloc("gpio_tw686x", PLATFORM_DEVID_AUTO);
 	if (!pdev)
 		return NULL;
 
+	printk( "good platform_device_alloc\n");
 	pdev->dev.parent = &pcidev->dev;
 	ACPI_COMPANION_SET(&pdev->dev, ACPI_COMPANION(&pcidev->dev));
+
+
+	if (platform_device_add(pdev) < 0) {
+		platform_device_put(pdev);
+		return NULL;
+	}
 
 	return pdev;
 }

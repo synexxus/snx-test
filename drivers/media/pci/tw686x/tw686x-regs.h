@@ -33,6 +33,8 @@
 #define AUDIO_CONTROL2		0x2d
 #define PHASE_REF		0x2e
 #define GPIO_REG		0x2f
+#define GPIO_BANK2		0xe0
+#define GPIO_BANK3		0xe0
 #define INTL_HBAR_CTRL		REG8_1(0x30)
 #define AUDIO_CONTROL3		0x38
 #define VIDEO_FIELD_CTRL	REG8_1(0x39)
