@@ -13,16 +13,154 @@
 #define DRIVER_NAME "gpio_tw686x"
 
 struct tw686x_gpio_chip{
+	struct tw686x_dev *parent;
+	struct gpio_chip gpio_chip;
+	struct mutex lock;
 };
+
+static int tw686x_gpio_register_num(int offset)
+{
+	if (offset < 16)
+		return GPIO_REG;
+	if (offset > 15 && offset < 32)
+		return GPIO_REG + 1;
+
+	return GPIO_REG + 2;
+}
+
+static int tw686x_direction_bit(int offset)
+{
+	if (offset < 16)
+		return offset << 16;
+	if (offset > 15 && offset < 32) 
+		return (offset - 16) << 16;
+
+	return (offset - 32) << 16;
+}
+
+static int tw686x_value_bit(int offset)
+{
+	if (offset < 16)
+		return offset;
+	if (offset > 15 && offset < 32) 
+		return offset - 16;
+
+	return offset - 32;
+}
+
+static void tw686x_set_gpio(struct gpio_chip *chip, int val,
+			unsigned int offset)
+{
+	struct tw686x_gpio_chip *tw686x_gpio = gpiochip_get_data(chip);
+	int temp;
+
+	mutex_lock(&tw686x_gpio->lock);
+	temp = reg_read(tw686x_gpio->parent, tw686x_gpio_register_num(offset));
+	temp &= ~BIT(tw686x_value_bit(offset));
+	if (val)
+		temp |= BIT(tw686x_direction_bit(offset));
+	reg_write(tw686x_gpio->parent, tw686x_gpio_register_num(offset), temp);
+	mutex_unlock(&tw686x_gpio->lock);
+}
+
+static int tw686x_set_direction(struct gpio_chip *chip, int direction,
+			      unsigned int offset)
+{
+	struct tw686x_gpio_chip *tw686x_gpio = gpiochip_get_data(chip);
+	int temp;
+
+	mutex_lock(&tw686x_gpio->lock);
+	temp = reg_read(tw686x_gpio->parent, tw686x_gpio_register_num(offset));
+	temp &= ~BIT(tw686x_direction_bit(offset));
+	if (direction)
+		temp |= BIT(tw686x_direction_bit(offset));
+	reg_write(tw686x_gpio->parent, tw686x_gpio_register_num(offset), temp);
+	mutex_unlock(&tw686x_gpio->lock);
+
+	return 0;
+}
+
+
+static int tw686x_direction_output(struct gpio_chip *chip, unsigned int offset,
+				 int value)
+{
+	tw686x_set_gpio(chip, offset, value);
+	return tw686x_set_direction(chip, 0, offset);
+}
+
+static int tw686x_direction_input(struct gpio_chip *chip, unsigned int offset)
+{
+	return tw686x_set_direction(chip, 1, offset);
+}
+
+static int tw686x_get_direction(struct gpio_chip *chip, unsigned int offset)
+{
+	struct tw686x_gpio_chip *tw686x_gpio = gpiochip_get_data(chip);
+	int temp;
+
+	mutex_lock(&tw686x_gpio->lock);
+	temp = reg_read(tw686x_gpio->parent, tw686x_gpio_register_num(offset));
+	temp |= BIT(tw686x_direction_bit(offset));
+	mutex_unlock(&tw686x_gpio->lock);
+	
+	return !!temp;
+}
+
+static int tw686x_get_value(struct gpio_chip *chip, unsigned int offset)
+{
+	struct tw686x_gpio_chip *tw686x_gpio = gpiochip_get_data(chip);
+	int temp;
+
+	mutex_lock(&tw686x_gpio->lock);
+	temp = reg_read(tw686x_gpio->parent, tw686x_gpio_register_num(offset));
+	temp |= BIT(tw686x_value_bit(offset));
+	mutex_unlock(&tw686x_gpio->lock);
+	
+	return !!temp;
+}
+
+static void tw686x_set_value(struct gpio_chip *chip, unsigned int offset,
+			   int value)
+{
+	tw686x_set_gpio(chip, offset, value);
+}
 
 static int gpio_tw686x_probe(struct platform_device *pdev)
 {
 	struct pci_dev *pcidev = to_pci_dev(pdev->dev.parent);
 	struct tw686x_gpio_chip *tw686x_gpio;
+	int ret;
 
 	tw686x_gpio = devm_kzalloc(&pdev->dev, sizeof(*tw686x_gpio), GFP_KERNEL);
 	if (!tw686x_gpio)
 		return -ENOMEM;
+
+
+	mutex_init(&tw686x_gpio->lock);
+
+	tw686x_gpio->parent = pci_get_drvdata(pcidev);
+	tw686x_gpio->gpio_chip.label = "tw686x_gpio";
+	tw686x_gpio->gpio_chip.parent = &pdev->dev;
+	tw686x_gpio->gpio_chip.direction_output = tw686x_direction_output;
+	tw686x_gpio->gpio_chip.direction_input = tw686x_direction_input;
+	tw686x_gpio->gpio_chip.get_direction = tw686x_get_direction;
+	tw686x_gpio->gpio_chip.get = tw686x_get_value;
+	tw686x_gpio->gpio_chip.set = tw686x_set_value;
+	tw686x_gpio->gpio_chip.base = -1;
+	tw686x_gpio->gpio_chip.ngpio = 42;
+
+	ret = devm_gpiochip_add_data(&pdev->dev,
+				     &tw686x_gpio->gpio_chip, tw686x_gpio);
+	if (ret)
+		goto err_destroy;
+
+	platform_set_drvdata(pdev, tw686x_gpio);
+
+	return 0;
+
+err_destroy:
+	mutex_destroy(&tw686x_gpio->lock);
+	return ret;
 
 #if 0
 	struct exar_gpio_chip *exar_gpio;
@@ -89,8 +227,7 @@ static int gpio_tw686x_remove(struct platform_device *pdev)
 {
 	struct tw686x_gpio_chip *tw686x_gpio = platform_get_drvdata(pdev);
 
-	//ida_simple_remove(&ida_index, exar_gpio->index);
-	//mutex_destroy(&exar_gpio->lock);
+	mutex_destroy(&tw686x_gpio->lock);
 
 	return 0;
 }
