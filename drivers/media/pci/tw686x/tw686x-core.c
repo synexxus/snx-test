@@ -39,6 +39,8 @@
 #include <linux/pci_ids.h>
 #include <linux/slab.h>
 #include <linux/timer.h>
+#include <linux/acpi.h>
+#include <linux/platform_device.h>
 
 #include "tw686x.h"
 #include "tw686x-regs.h"
@@ -240,6 +242,20 @@ static void tw686x_dev_release(struct v4l2_device *v4l2_dev)
 	kfree(dev);
 }
 
+static void* tw686x_register_gpio(struct pci_dev *pcidev)
+{
+	struct platform_device *pdev;
+
+	pdev = platform_device_alloc("gpio_tw686x", PLATFORM_DEVID_AUTO);
+	if (!pdev)
+		return NULL;
+
+	pdev->dev.parent = &pcidev->dev;
+	ACPI_COMPANION_SET(&pdev->dev, ACPI_COMPANION(&pcidev->dev));
+
+	return pdev;
+}
+
 static int tw686x_probe(struct pci_dev *pci_dev,
 			const struct pci_device_id *pci_id)
 {
@@ -343,6 +359,9 @@ static int tw686x_probe(struct pci_dev *pci_dev,
 	if (err)
 		dev_warn(&pci_dev->dev, "can't register audio\n");
 
+	
+	dev->gpio_plat = tw686x_register_gpio(pci_dev);
+
 	pci_set_drvdata(pci_dev, dev);
 	return 0;
 
@@ -397,6 +416,9 @@ static void tw686x_remove(struct pci_dev *pci_dev)
 	 * Otherwise, release is postponed until there are no users left.
 	 */
 	v4l2_device_put(&dev->v4l2_dev);
+
+	platform_device_unregister(dev->gpio_plat);
+	dev->gpio_plat = NULL;
 }
 
 /*
