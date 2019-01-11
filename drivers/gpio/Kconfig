@@ -518,6 +518,14 @@ config GPIO_THUNDERX
 	  Say yes here to support the on-chip GPIO lines on the ThunderX
 	  and OCTEON-TX families of SoCs.
 
+config GPIO_TW686X
+	tristate "TW686X GPIO pin support"
+	depends on VIDEO_TW686X
+	help
+	  Selecting this option will enable handling of GPIO pins present
+	  on Techwell 686X series chips
+
+
 config GPIO_UNIPHIER
 	tristate "UniPhier GPIO support"
 	depends on ARCH_UNIPHIER || COMPILE_TEST
