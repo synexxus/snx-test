@@ -34,7 +34,7 @@
 #define PHASE_REF		0x2e
 #define GPIO_REG		0x2f
 #define GPIO_BANK2		0xe0
-#define GPIO_BANK3		0xe0
+#define GPIO_BANK3		0xe1
 #define INTL_HBAR_CTRL		REG8_1(0x30)
 #define AUDIO_CONTROL3		0x38
 #define VIDEO_FIELD_CTRL	REG8_1(0x39)
@@ -50,6 +50,7 @@
 #define VDMA_F2_P_ADDR		REG8_8(0x84)
 #define VDMA_F2_WHP		REG8_8(0x85)
 #define VDMA_F2_B_ADDR		REG8_8(0x86)
+#define PIN_CFG_CTRL		0xfb
 #define EP_REG_ADDR		0xfe
 #define EP_REG_DATA		0xff
 

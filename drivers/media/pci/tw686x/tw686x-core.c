@@ -246,15 +246,12 @@ static void* tw686x_register_gpio(struct pci_dev *pcidev)
 {
 	struct platform_device *pdev;
 
-	printk( "register gpio tw686x\n" );
 	pdev = platform_device_alloc("gpio_tw686x", PLATFORM_DEVID_AUTO);
 	if (!pdev)
 		return NULL;
 
-	printk( "good platform_device_alloc\n");
 	pdev->dev.parent = &pcidev->dev;
 	ACPI_COMPANION_SET(&pdev->dev, ACPI_COMPANION(&pcidev->dev));
-
 
 	if (platform_device_add(pdev) < 0) {
 		platform_device_put(pdev);
@@ -323,6 +320,7 @@ static int tw686x_probe(struct pci_dev *pci_dev,
 		goto free_region;
 	}
 
+
 	/* Reset all subsystems */
 	reg_write(dev, SYS_SOFT_RST, 0x0f);
 	mdelay(1);
@@ -330,6 +328,11 @@ static int tw686x_probe(struct pci_dev *pci_dev,
 	reg_write(dev, SRST[0], 0x3f);
 	if (max_channels(dev) > 4)
 		reg_write(dev, SRST[1], 0x3f);
+
+	printk( "GPIO0 is 0x%08X\n", reg_read(dev, GPIO_REG) );
+	printk( "GPIO1 is 0x%08X\n", reg_read(dev, GPIO_BANK2) );
+	printk( "GPIO2 is 0x%08X\n", reg_read(dev, GPIO_BANK3) );
+	printk( "PINCFG_CTRL is 0x%08X\n", reg_read(dev, PIN_CFG_CTRL) );
 
 	/* Disable the DMA engine */
 	reg_write(dev, DMA_CMD, 0);

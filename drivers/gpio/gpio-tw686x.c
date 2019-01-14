@@ -56,9 +56,11 @@ static void tw686x_set_gpio(struct gpio_chip *chip, int val,
 
 	mutex_lock(&tw686x_gpio->lock);
 	temp = reg_read(tw686x_gpio->parent, tw686x_gpio_register_num(offset));
+	printk( "set_gpio reg read 0x%X\n", temp );
 	temp &= ~tw686x_value_bit(offset);
 	if (val)
 		temp |= tw686x_value_bit(offset);
+	printk("offset %d is bit 0x%X\n", offset, tw686x_value_bit(offset));
 	printk( "gpio setting reg %x to value %x\n", tw686x_gpio_register_num(offset), temp);
 	reg_write(tw686x_gpio->parent, tw686x_gpio_register_num(offset), temp);
 	mutex_unlock(&tw686x_gpio->lock);
@@ -72,12 +74,9 @@ static int tw686x_set_direction(struct gpio_chip *chip, int direction,
 
 	mutex_lock(&tw686x_gpio->lock);
 	temp = reg_read(tw686x_gpio->parent, tw686x_gpio_register_num(offset));
-	printk( "direction temp orig 0x%08X\n", temp );
 	temp &= ~tw686x_direction_bit(offset);
 	if (direction)
 		temp |= tw686x_direction_bit(offset);
-	printk( "direction bit value is 0x%X for offset %d\n", tw686x_direction_bit(offset), offset);
-	printk( "dir setting reg %x to value %x\n", tw686x_gpio_register_num(offset), temp);
 	reg_write(tw686x_gpio->parent, tw686x_gpio_register_num(offset), temp);
 	mutex_unlock(&tw686x_gpio->lock);
 
@@ -104,7 +103,8 @@ static int tw686x_get_direction(struct gpio_chip *chip, unsigned int offset)
 
 	mutex_lock(&tw686x_gpio->lock);
 	temp = reg_read(tw686x_gpio->parent, tw686x_gpio_register_num(offset));
-	temp |= BIT(tw686x_direction_bit(offset));
+	printk( "get direction temp is 0x%x\n", temp );
+	temp &= tw686x_direction_bit(offset);
 	mutex_unlock(&tw686x_gpio->lock);
 	
 	return !!temp;
@@ -117,7 +117,7 @@ static int tw686x_get_value(struct gpio_chip *chip, unsigned int offset)
 
 	mutex_lock(&tw686x_gpio->lock);
 	temp = reg_read(tw686x_gpio->parent, tw686x_gpio_register_num(offset));
-	temp |= BIT(tw686x_value_bit(offset));
+	temp &= tw686x_value_bit(offset);
 	mutex_unlock(&tw686x_gpio->lock);
 	
 	return !!temp;
