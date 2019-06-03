@@ -334,6 +334,49 @@ static int iot2040_rs485_config(struct uart_port *port,
 	return generic_rs485_config(port, rs485);
 }
 
+static int syn_rs485_config(struct uart_port *port,
+				struct serial_rs485 *rs485)
+{
+	bool is_rs485 = !!(rs485->flags & SER_RS485_ENABLED);
+	u8 __iomem *p = port->membase;
+	u8 sel_a, sel_b, mask, value;
+
+	if (is_rs485) {
+		if (rs485->flags & SER_RS485_RX_DURING_TX){
+			sel_a = 1;
+			sel_b = 1;
+		} else {
+			sel_a = 1;
+			sel_b = 0;
+		}
+	} else {
+		/* RS232 mode */
+		sel_a = 0;
+		sel_b = 0;
+	}
+
+	if (port->line == 0) {
+		/* COM1 */
+		sel_a = sel_a << 5; /* MPIO 13 */
+		sel_b = sel_b << 2; /* MPIO 10 */
+		mask = (u8)BIT(5) | (u8)BIT(2);
+	}else if (port->line == 7) {
+		/* COM2 */
+		sel_a = sel_a << 7; /* MPIO 15 */
+		sel_b = sel_b << 6; /* MPIO 14 */
+		mask = (u8)BIT(7) | (u8)BIT(6);
+	}else{
+		return -EINVAL;
+	}
+
+	value = readb(p + UART_EXAR_MPIOLVL_15_8);
+	value &= ~mask;
+	value |= (sel_a | sel_b);
+	writeb(value, p + UART_EXAR_MPIOLVL_15_8);
+
+	return generic_rs485_config(port, rs485);
+}
+
 static const struct property_entry iot2040_gpio_properties[] = {
 	PROPERTY_ENTRY_U32("exar,first-pin", 10),
 	PROPERTY_ENTRY_U32("ngpios", 1),
@@ -372,6 +415,53 @@ static const struct dmi_system_id exar_platforms[] = {
 	},
 	{}
 };
+
+static const struct exar8250_platform syn_platform = {
+	.rs485_config = syn_rs485_config,
+	//.register_gpio = syn_register_gpio,
+	.register_gpio = xr17v35x_register_gpio,
+};
+
+static int
+syn_pci_xr17v35x_setup(struct exar8250 *priv, struct pci_dev *pcidev,
+		   struct uart_8250_port *port, int idx)
+{
+	const struct exar8250_platform *platform;
+	unsigned int offset = idx * 0x400;
+	unsigned int baud = 7812500;
+	u8 __iomem *p;
+	int ret;
+
+	platform = &syn_platform;
+
+	port->port.uartclk = baud * 16;
+	port->port.rs485_config = platform->rs485_config;
+
+	/*
+	 * Setup the UART clock for the devices on expansion slot to
+	 * half the clock speed of the main chip (which is 125MHz)
+	 */
+	if (idx >= 8)
+		port->port.uartclk /= 2;
+
+	ret = default_setup(priv, pcidev, idx, offset, port);
+	if (ret)
+		return ret;
+
+	p = port->port.membase;
+
+	writeb(0x00, p + UART_EXAR_8XMODE);
+	writeb(UART_FCTR_EXAR_TRGD, p + UART_EXAR_FCTR);
+	writeb(128, p + UART_EXAR_TXTRG);
+	writeb(128, p + UART_EXAR_RXTRG);
+
+	if (idx == 0) {
+		/* Setup Multipurpose Input/Output pins. */
+		setup_gpio(pcidev, p);
+	}
+
+	return ret;
+}
 
 static int
 pci_xr17v35x_setup(struct exar8250 *priv, struct pci_dev *pcidev,
@@ -616,6 +706,11 @@ static const struct exar8250_board pbn_exar_XR17V8358 = {
 	.exit		= pci_xr17v35x_exit,
 };
 
+static const struct exar8250_board pbn_exar_synexxus = {
+	.num_ports	= 8,
+	.setup		= syn_pci_xr17v35x_setup,
+};
+
 #define CONNECT_DEVICE(devid, sdevid, bd) {				\
 	PCI_DEVICE_SUB(							\
 		PCI_VENDOR_ID_EXAR,					\
@@ -635,6 +730,15 @@ static const struct exar8250_board pbn_exar_XR17V8358 = {
 		PCI_DEVICE_ID_EXAR_##devid,		\
 		PCI_VENDOR_ID_IBM,			\
 		PCI_SUBDEVICE_ID_IBM_##sdevid), 0, 0,	\
+		(kernel_ulong_t)&bd			\
+	}
+
+#define SYN_DEVICE(devid, sdevid, bd) {			\
+	PCI_DEVICE_SUB(					\
+		PCI_VENDOR_ID_EXAR,			\
+		PCI_DEVICE_ID_EXAR_##devid,		\
+		0x0055,			\
+		0x0001), 0, 0,	\
 		(kernel_ulong_t)&bd			\
 	}
 
@@ -673,6 +777,9 @@ static const struct pci_device_id exar_pci_tbl[] = {
 	EXAR_DEVICE(COMMTECH, COMMTECH_4224PCI335, pbn_fastcom335_4),
 	EXAR_DEVICE(COMMTECH, COMMTECH_2324PCI335, pbn_fastcom335_4),
 	EXAR_DEVICE(COMMTECH, COMMTECH_2328PCI335, pbn_fastcom335_8),
+
+	/* Syn device */
+	SYN_DEVICE(XR17C158, UART_8, pbn_exar_synexxus),
 	{ 0, }
 };
 MODULE_DEVICE_TABLE(pci, exar_pci_tbl);
