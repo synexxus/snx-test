@@ -355,12 +355,15 @@ static int syn_rs485_config(struct uart_port *port,
 		sel_b = 0;
 	}
 
-	if (port->line == 0) {
+	/* Note: the port->line refers to the ttySX number,
+	 * not the number of the tty on the exar.
+	 */
+	if (port->line == 6) {
 		/* COM1 */
 		sel_a = sel_a << 5; /* MPIO 13 */
 		sel_b = sel_b << 2; /* MPIO 10 */
 		mask = (u8)BIT(5) | (u8)BIT(2);
-	}else if (port->line == 7) {
+	}else if (port->line == 1) {
 		/* COM2 */
 		sel_a = sel_a << 7; /* MPIO 15 */
 		sel_b = sel_b << 6; /* MPIO 14 */
@@ -416,10 +419,23 @@ static const struct dmi_system_id exar_platforms[] = {
 	{}
 };
 
+static int syn_register_gpio(struct pci_dev *pcidev,
+			      struct uart_8250_port *port)
+{
+	u8 __iomem *p = port->port.membase;
+	int output_bits = BIT(2) | BIT(5) | BIT(6) | BIT(7);
+
+	writeb(~(output_bits), p + UART_EXAR_MPIOSEL_15_8);
+
+	//port->port.private_data =
+	//	__xr17v35x_register_gpio(pcidev, iot2040_gpio_properties);
+
+	return 0;
+}
+
 static const struct exar8250_platform syn_platform = {
 	.rs485_config = syn_rs485_config,
-	//.register_gpio = syn_register_gpio,
-	.register_gpio = xr17v35x_register_gpio,
+	.register_gpio = syn_register_gpio,
 };
 
 static int
@@ -457,7 +473,7 @@ syn_pci_xr17v35x_setup(struct exar8250 *priv, struct pci_dev *pcidev,
 
 	if (idx == 0) {
 		/* Setup Multipurpose Input/Output pins. */
-		setup_gpio(pcidev, p);
+		syn_register_gpio(pcidev, port);
 	}
 
 	return ret;
@@ -733,10 +749,10 @@ static const struct exar8250_board pbn_exar_synexxus = {
 		(kernel_ulong_t)&bd			\
 	}
 
-#define SYN_DEVICE(devid, sdevid, bd) {			\
+#define SYN_DEVICE(vend, devid, bd) {			\
 	PCI_DEVICE_SUB(					\
-		PCI_VENDOR_ID_EXAR,			\
-		PCI_DEVICE_ID_EXAR_##devid,		\
+		PCI_VENDOR_ID_##vend,			\
+		PCI_DEVICE_ID_##devid,			\
 		0x0055,			\
 		0x0001), 0, 0,	\
 		(kernel_ulong_t)&bd			\
@@ -763,6 +779,9 @@ static const struct pci_device_id exar_pci_tbl[] = {
 	EXAR_DEVICE(EXAR, EXAR_XR17C154, pbn_exar_XR17C15x),
 	EXAR_DEVICE(EXAR, EXAR_XR17C158, pbn_exar_XR17C15x),
 
+	/* Syn device */
+	SYN_DEVICE(EXAR, EXAR_XR17V358, pbn_exar_synexxus),
+
 	/* Exar Corp. XR17V[48]35[248] Dual/Quad/Octal/Hexa PCIe UARTs */
 	EXAR_DEVICE(EXAR, EXAR_XR17V352, pbn_exar_XR17V35x),
 	EXAR_DEVICE(EXAR, EXAR_XR17V354, pbn_exar_XR17V35x),
@@ -778,8 +797,6 @@ static const struct pci_device_id exar_pci_tbl[] = {
 	EXAR_DEVICE(COMMTECH, COMMTECH_2324PCI335, pbn_fastcom335_4),
 	EXAR_DEVICE(COMMTECH, COMMTECH_2328PCI335, pbn_fastcom335_8),
 
-	/* Syn device */
-	SYN_DEVICE(XR17C158, UART_8, pbn_exar_synexxus),
 	{ 0, }
 };
 MODULE_DEVICE_TABLE(pci, exar_pci_tbl);
