@@ -123,4 +123,14 @@ config CAN_UCAN
 	          from Theobroma Systems like the A31-µQ7 and the RK3399-Q7
 	          (https://www.theobroma-systems.com/rk3399-q7)
 
+config CAN_SYNCAN
+	tristate "Synexxus CAN interface"
+	---help---
+	  This driver support the synexxus CAN interface
+
+config CAN_SYNCAN_GPIO
+	tristate "Synexxus CAN interface(gpio)"
+	---help---
+	  This driver support the synexxus CAN interface(gpio)
+
 endmenu
