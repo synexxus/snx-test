@@ -1081,6 +1081,11 @@ config HID_ALPS
 
 endmenu
 
+config HIDCRT
+	tristate "HIDCRT driver support"
+	---help---
+	  Synexxus HIDRCRT driver
+
 endif # HID
 
 source "drivers/hid/usbhid/Kconfig"
