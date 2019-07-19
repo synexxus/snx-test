@@ -2441,10 +2441,7 @@ void serial8250_do_shutdown(struct uart_port *port)
 	 */
 	serial_port_out(port, UART_LCR,
 			serial_port_in(port, UART_LCR) & ~UART_LCR_SBC);
-	if (serial_in(up, UART_LSR) & UART_LSR_TEMT){
-		/* Check if transmitter is empty before clearing FIFOs */
-		serial8250_clear_fifos(up);
-	}
+	serial8250_clear_fifos(up);
 
 #ifdef CONFIG_SERIAL_8250_RSA
 	/*
