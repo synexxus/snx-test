@@ -565,21 +565,18 @@ static void
 exar_shutdown(struct uart_port *port)
 {
 	unsigned char lsr;
-	bool uart_empty = 0;
 	bool tx_complete = 0;
 	struct uart_8250_port *up = up_to_u8250p(port);
 	struct circ_buf *xmit = &port->state->xmit;
 
 	do{
-		uart_empty = uart_circ_empty(xmit);
 		lsr = serial_in(up, UART_LSR);
-		if (lsr & (UART_LSR_TEMT | UART_LSR_THRE)) {
-			/* Tx complete - we can shutdown and clear FIFOs */
+		if (lsr & (UART_LSR_TEMT | UART_LSR_THRE))
 			tx_complete = 1;
-		}else
+		else
 			tx_complete = 0;
 		msleep(1);
-	}while( !uart_empty && !tx_complete );
+	}while( !uart_circ_empty(xmit) && !tx_complete );
 
 	serial8250_do_shutdown(port);
 }
