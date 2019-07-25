@@ -94,8 +94,8 @@ else
 	packageversion=$version-$revision
 fi
 sourcename=$KDEB_SOURCENAME
-packagename=linux-image-$version
-kernel_headers_packagename=linux-headers-$version
+packagename=linux-image-ekeel
+kernel_headers_packagename=linux-headers-ekeel
 dbg_packagename=$packagename-dbg
 debarch=
 set_debarch
