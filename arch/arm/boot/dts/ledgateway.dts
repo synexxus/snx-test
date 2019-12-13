@@ -350,22 +350,25 @@
 		radio_tx {
 			label = "radio_tx";
 			gpios = <&pioE 12 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
 		};
 
 		radio_rx {
 			label = "radio_rx";
 			gpios = <&pioE 13 GPIO_ACTIVE_HIGH>;
-			default-state = "on";
+			default-state = "off";
 		};
 
 		led_3 {
 			label = "led_3";
 			gpios = <&pioE 14 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
 		};
 
 		led_4 {
 			label = "led_4";
 			gpios = <&pioD 20 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
 		};
 
 		reset-led {
